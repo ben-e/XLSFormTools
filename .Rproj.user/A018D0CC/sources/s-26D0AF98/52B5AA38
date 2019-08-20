@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1566310237817.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2286214349",
+    "id" : "52B5AA38",
+    "lastKnownWriteTime" : 1566327403,
+    "last_content_update" : 1566327403163,
+    "path" : "C:/Users/ben/box/projects/XLSFormTools/R/read_xlsform.R",
+    "project_path" : "R/read_xlsform.R",
+    "properties" : {
+        "cursorPosition" : "38,9",
+        "scrollLine" : "31",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

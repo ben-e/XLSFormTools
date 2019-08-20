@@ -1,0 +1,57 @@
+# Description ------------------------------------------------------------------
+# Defines the xls_form class and the function to read an XLSForm from file.
+# Created by Ben Ewing on 2019-08-20
+
+# Libraries --------------------------------------------------------------------
+library(readxl)
+library(dplyr)
+library(purrr)
+
+# Constructors -----------------------------------------------------------------
+
+#' This is the base XLSForm class. See http://xlsform.org/ for standards.
+#'
+#' @param survey A data.frame representing the survey page of an XLSForm. Must
+#'   contain at least type, name, and label columns.
+#' @param choices A data.frame representing the choices page of an XLSForm. Must
+#'   contain at least list_name, name, and label columns.
+#' @param settings Optional. A data.frame representing the settings page of an
+#'   XLSForm.
+#'
+#' @return An xls_form S3 object representing the survey.
+xls_form <- function(survey, choices, settings = NULL) {
+  # TODO: Validity checks.
+  structure(list(survey, choices, settings), class = "xls_form")
+}
+
+# Functions --------------------------------------------------------------------
+
+#' Read an XLSForm from a file. The survey must have survey and choices sheets
+#' but may omit the settings sheet. Other sheets will be ignored.
+#'
+#' @param file The filepath.
+#'
+#' @return An xlss_form object.
+read_xls_form <- function(file) {
+  # Validate
+  sheets <- excel_sheets(file)
+  if (!("survey" %in% sheets)) {
+    stop("'survey' sheet is not present")
+  }
+  if (!("choices" %in% sheets)) {
+    stop("'choices' sheet is not present")
+  }
+
+  # Read sheets
+  survey <- read_excel(file, "survey")
+  choices <- read_excel(file, "choices")
+  # Only read settings if it exists; it is not strictly required
+  if ("settings" %in% sheets) {
+    settings <- read_excel(file, "settings")
+  } else {
+    settings <- NULL
+  }
+
+  # Create and return the object
+  xls_form(survey, choices, settings)
+}
