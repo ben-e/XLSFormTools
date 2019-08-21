@@ -1,28 +1,9 @@
 # Description ------------------------------------------------------------------
-# Defines the xls_form class and the function to read an XLSForm from file.
+# Function to read an XLSForm from file.
 # Created by Ben Ewing on 2019-08-20
 
 # Libraries --------------------------------------------------------------------
 library(readxl)
-library(dplyr)
-library(purrr)
-
-# Constructors -----------------------------------------------------------------
-
-#' This is the base XLSForm class. See http://xlsform.org/ for standards.
-#'
-#' @param survey A data.frame representing the survey page of an XLSForm. Must
-#'   contain at least type, name, and label columns.
-#' @param choices A data.frame representing the choices page of an XLSForm. Must
-#'   contain at least list_name, name, and label columns.
-#' @param settings Optional. A data.frame representing the settings page of an
-#'   XLSForm.
-#'
-#' @return An xls_form S3 object representing the survey.
-xls_form <- function(survey, choices, settings = NULL) {
-  # TODO: Validity checks.
-  structure(list(survey, choices, settings), class = "xls_form")
-}
 
 # Functions --------------------------------------------------------------------
 

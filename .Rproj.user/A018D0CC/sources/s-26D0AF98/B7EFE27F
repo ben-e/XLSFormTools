@@ -7,13 +7,13 @@
     "folds" : "",
     "hash" : "0",
     "id" : "B7EFE27F",
-    "lastKnownWriteTime" : 1566330635,
-    "last_content_update" : 1566330635395,
+    "lastKnownWriteTime" : 1566393447,
+    "last_content_update" : 1566393447459,
     "path" : "C:/Users/ben/box/projects/XLSFormTools/R/build_xlsform.R",
     "project_path" : "R/build_xlsform.R",
     "properties" : {
-        "cursorPosition" : "158,9",
-        "scrollLine" : "175"
+        "cursorPosition" : "5,36",
+        "scrollLine" : "0"
     },
     "relative_order" : 3,
     "source_on_save" : false,

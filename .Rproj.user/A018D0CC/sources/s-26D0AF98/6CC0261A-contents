@@ -1,0 +1,37 @@
+# Description ------------------------------------------------------------------
+# Generate an example survey.
+# Ben Ewing on 2019-08-20
+
+# Libraries --------------------------------------------------------------------
+library(purrr)
+library(dplyr)
+
+# Generate ---------------------------------------------------------------------
+ex <- xls_form(data.frame(type = character(), name = character()),
+               data.frame(list_name = character(), name = numeric()))
+
+# Add choices
+ex <- ex %>%
+  add_choices("yn", 0:1, c("No", "Yes")) %>%
+  add_choices("gender", 0:1, c("Male", "Female")) %>%
+  add_choices("agree",c(1:5, 888, 999), c("Strongly agree", "Agree",
+                                          "Neutral", "Disagree",
+                                          "Strongly disagree", "Don't know",
+                                          "Prefer not to respond"))
+
+# Add admin.
+ex <- ex %>%
+  add_start() %>%
+  add_end() %>%
+  add_deviceid()
+
+# Add intro section
+section_a <- xls_form(data.frame(), data.frame())
+section_a <- section_a %>%
+  add_integer("vilid", "A1. Village ID") %>%
+  add_select_one("yn", "consent", "A2. Did the respondent consent?")
+ex <- ex %>% add_group(section_a, "section_a")
+
+# Add simple household roster section
+
+# Add survey end

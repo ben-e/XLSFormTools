@@ -1,8 +1,12 @@
 # Description ------------------------------------------------------------------
 # Functions to build an XLSForm survey.
+# It's definitely overkill to have a function for each type, but I think it
+# makes survey building very explicit.
+# Reference: http://xlsform.org/en/
 # Created by Ben Ewing on 2019-08-20
 
 # Libraries --------------------------------------------------------------------
+library(tibble)
 library(dplyr)
 
 # Functions --------------------------------------------------------------------
@@ -21,11 +25,11 @@ add_choices <- function(form, list_name, name, label) {
   if (length(name) != length(label))
     stop("The length of 'name' does not match the length of 'label'.")
 
-  # Create the dataframe holding the new choices
+  # Create the tibble holding the new choices
   n_choices <- length(name)
-  new_choices <- data.frame(list_name = rep(list_name, n_choices),
-                            name = name,
-                            label = label)
+  new_choices <- tibble(list_name = rep(list_name, n_choices),
+                        name = name,
+                        label = label)
 
   # Append to the form's existing choices
   form$choices <- bind_rows(form$choices, new_choices)
@@ -57,6 +61,7 @@ add_group <- function(form, group_form, group_name, relevant = "") {
   # Add to the form's choices, first check for intersecting choices
   overlap <- intersect(unique(form$choices$list_name),
                        unique(group_form$choices$list_name))
+
   # If there is no overlap, we can just add the choices right away.
   if (length(overlap) == 0)
     form$choices <- bind_rows(form$choices, group_form$choices)
@@ -65,15 +70,16 @@ add_group <- function(form, group_form, group_name, relevant = "") {
 
   # Add to the form's survey
   # The group is inserted in between these rows
-  bookends <- data.frame(
+  bookends <- tibble(
     type = c("begin group", "end group"),
     name = rep(group_name, 2),
     relevant = c(relevant, "")
   )
 
-  form$survey <- bind_rows(bookends[1, ], group_form, bookends[2, ])
+  form$survey <- bind_rows(form$survey, bookends[1, ],
+                           group_form$survey, bookends[2, ])
 
-  return(form)
+  form
 }
 
 #' Add a repeat group to an existing xls_form. See ?add_group for details.
@@ -91,22 +97,32 @@ add_group <- function(form, group_form, group_name, relevant = "") {
 #' @return The form with the group added.
 add_repeat_group <- function(form, group_form, group_name, repeat_count,
                              relevant = "") {
-  # Add as a group, as normal
-  # I'm using this here so that I don't have to repeat the choices code
-  form <- add_group(form, group_form, group_name, relevant)
+  # TODO: Verify that group does not already exist.
+  # TODO: Verify that group name isn't the same as a variable.
 
-  # Replace begin and end group with begin and end repeat
-  form[form$type == 'begin group' & form$name == group_name,
-       'type'] <- "begin repeat"
-  form[form$type == 'end group' & form$name == group_name,
-       'type'] <- "end repeat"
+  # Add to the form's choices, first check for intersecting choices
+  overlap <- intersect(unique(form$choices$list_name),
+                       unique(group_form$choices$list_name))
 
-  # Add the repeat_count
-  form[form$type == 'begin repeat' & form$name == group_name,
-       'repeat_count'] <- repeat_count
+  # If there is no overlap, we can just add the choices right away.
+  if (length(overlap) == 0)
+    form$choices <- bind_rows(form$choices, group_form$choices)
+  else
+    stop("There is overlap between the form and group_form choices.")
 
-  # Return
-  return(form)
+  # Add to the form's survey
+  # The group is inserted in between these rows
+  bookends <- tibble(
+    type = c("begin repeat", "end repeat"),
+    name = rep(group_name, 2),
+    repeat_count = c(repeat_count, ""),
+    relevant = c(relevant, "")
+  )
+
+  form$survey <- bind_rows(form$survey, bookends[1, ],
+                           group_form$survey, bookends[2, ])
+
+  form
 }
 
 #' Add an integer question to the form.
@@ -123,16 +139,16 @@ add_integer <- function(form, name, label, constraint = "", relevant = "") {
     stop(paste0("Variable ", name, " already exists in form."))
 
   # The new question row
-  new_q <- data.frame(type = "integer", name = name, label = label,
-                      constraint = constraint, relevant = relevant)
+  new_q <- tibble(type = "integer", name = name, label = label,
+                  constraint = constraint, relevant = relevant)
 
   # Add to the survey
   form$survey <- bind_rows(form$survey, new_q)
 
-  return(form)
+  form
 }
 
-#' Add an decimal question to the form.
+#' Add a decimal question to the form.
 #'
 #' @param form The XLSForm to be added to.
 #' @param name The name of the variable.
@@ -146,25 +162,207 @@ add_decimal <- function(form, name, label, constraint = "", relevant = "") {
     stop(paste0("Variable ", name, " already exists in form."))
 
   # The new question row
-  new_q <- data.frame(type = "decimal", name = name, label = label,
-                      constraint = constraint, relevant = relevant)
+  new_q <- tibble(type = "decimal", name = name, label = label,
+                  constraint = constraint, relevant = relevant)
 
   # Add to the survey
   form$survey <- bind_rows(form$survey, new_q)
 
-  return(form)
+  form
 }
 
-# add_range
-#   TODO: Range input (including rating)
-# add_text
-#   TODO: Free text response.
-# add_select_one
-#   TODO: [options] 	Multiple choice question; only one answer can be selected.
-# add_select_multiple
-#   TODO: [options] 	Multiple choice question; multiple answers can be selected.
-# add_rank
-#   TODO: [options] 	Rank question; order a list.
+#' Add a range question to the form.
+#'
+#' @param form The XLSForm to be added to.
+#' @param name The name of the variable.
+#' @param label The question label
+#' @param parameters The start stop and step string, defaults to
+#'   "start=0 end=10 step=1"
+#' @param constraint A string containing a valid constraint.
+#' @param relevant A string containing a valid relevant.
+#'
+#' @return The form with the new question.
+add_range <- function(form, name, label, parameters = "start=0 end=10 step=1",
+                      constraint = "", relevant = "") {
+  if (name %in% form$survey$name)
+    stop(paste0("Variable ", name, " already exists in form."))
+
+  # The new question row
+  new_q <- tibble(type = "range", name = name, label = label,
+                  parameters = parameters,
+                  constraint = constraint, relevant = relevant)
+
+  # Add to the survey
+  form$survey <- bind_rows(form$survey, new_q)
+
+  form
+}
+
+#' Add a text free-response question to the form.
+#'
+#' @param form The XLSForm to be added to.
+#' @param name The name of the variable.
+#' @param label The question label
+#' @param constraint A string containing a valid constraint. Note that regex can
+#'   be used here, see https://docs.opendatakit.org/form-regex/.
+#' @param relevant A string containing a valid relevant.
+#'
+#' @return The form with the new question.
+add_text <- function(form, name, label, constraint = "", relevant = "") {
+  if (name %in% form$survey$name)
+    stop(paste0("Variable ", name, " already exists in form."))
+
+  # The new question row
+  new_q <- tibble(type = "text", name = name, label = label,
+                  constraint = constraint, relevant = relevant)
+
+  # Add to the survey
+  form$survey <- bind_rows(form$survey, new_q)
+
+  form
+}
+
+#' Add a select_one question to the form.
+#'
+#' @param form The XLSForm to be added to.
+#' @param name The name of the variable.
+#' @param choices The list_name of the choices.
+#' @param label The question label
+#' @param constraint A string containing a valid constraint. Note that regex can
+#'   be used here, see https://docs.opendatakit.org/form-regex/.
+#' @param relevant A string containing a valid relevant.
+#'
+#' @return The form with the new question.
+add_select_one <- function(form, name, label, choices, constraint = "",
+                           relevant = "") {
+  if (name %in% form$survey$name)
+    stop(paste0("Variable ", name, " already exists in form."))
+
+  # The new question row
+  new_q <- tibble(type = paste0("select_one ", choices),
+                  name = name, label = label,
+                  constraint = constraint, relevant = relevant)
+
+  # Add to the survey
+  form$survey <- bind_rows(form$survey, new_q)
+
+  form
+}
+
+#' Add a select_multiple question to the form.
+#'
+#' @param form The XLSForm to be added to.
+#' @param name The name of the variable.
+#' @param choices The list_name of the choices.
+#' @param label The question label
+#' @param constraint A string containing a valid constraint. Note that regex can
+#'   be used here, see https://docs.opendatakit.org/form-regex/.
+#' @param relevant A string containing a valid relevant.
+#'
+#' @return The form with the new question.
+add_select_multiple <- function(form, name, label, choices, constraint = "",
+                                relevant = "") {
+  if (name %in% form$survey$name)
+    stop(paste0("Variable ", name, " already exists in form."))
+
+  # The new question row
+  new_q <- tibble(type = paste0("select_multiple ", choices),
+                  name = name, label = label,
+                  constraint = constraint, relevant = relevant)
+
+  # Add to the survey
+  form$survey <- bind_rows(form$survey, new_q)
+
+  form
+}
+
+#' Add a rank question to the form.
+#'
+#' TODO: Randomization parameter?
+#'
+#' @param form The XLSForm to be added to.
+#' @param name The name of the variable.
+#' @param choices The list_name of the choices.
+#' @param label The question label
+#' @param constraint A string containing a valid constraint. Note that regex can
+#'   be used here, see https://docs.opendatakit.org/form-regex/.
+#' @param relevant A string containing a valid relevant.
+#'
+#' @return The form with the new question.
+add_rank <- function(form, name, label, choices, constraint = "",
+                     relevant = "") {
+  if (name %in% form$survey$name)
+    stop(paste0("Variable ", name, " already exists in form."))
+
+  # The new question row
+  new_q <- tibble(type = paste0("rank ", choices),
+                  name = name, label = label,
+                  constraint = constraint, relevant = relevant)
+
+  # Add to the survey
+  form$survey <- bind_rows(form$survey, new_q)
+
+  form
+}
+
+#' Add start date/time to form.
+#'
+#' @param form The form to add to.
+#'
+#' @return The form with the start time.
+add_start <- function(form) {
+  start <- tibble(type = "start", name = "start")
+  form$survey <- bind_rows(form$survey, start)
+  form
+}
+
+#' Add end date/time to form.
+#'
+#' @param form The form to add to.
+#'
+#' @return The form with the end time.
+add_end <- function(form) {
+  end <- tibble(type = "end", name = "end")
+  form$survey <- bind_rows(form$survey, end)
+  form
+}
+
+#' Add today's date/time to form.
+#'
+#' @param form The form to add to.
+#'
+#' @return The form with day's date.
+add_today <- function(form) {
+  today <- tibble(type = "today", name = "today")
+  form$survey <- bind_rows(form$survey, today)
+  form
+}
+
+#' Add deviceid to the form. Note that deviceid is just the phone's IMEI:
+#' https://en.wikipedia.org/wiki/International_Mobile_Equipment_Identity
+#'
+#' @param form The form to add to.
+#'
+#' @return The form with the deviceid.
+add_deviceid <- function(form) {
+  deviceid <- tibble(type = "deviceid", name = "deviceid")
+  form$survey <- bind_rows(form$survey, deviceid)
+  form
+}
+
+#' Add a note.
+#'
+#' @param form The form to add to.
+#' @param name The note identifier
+#' @param label The note
+#'
+#' @return The form with the note added.
+add_note <- function(form, name, label) {
+  new_note <- tibble(type = "note", name = name, label = label)
+  form$survey <- bind_rows(form$survey, new_note)
+  form
+}
+
 # add_note
 #   TODO: Display a note on the screen, takes no input.
 # add_geopoint
