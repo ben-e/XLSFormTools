@@ -6,6 +6,8 @@
 library(purrr)
 library(dplyr)
 
+# TODO: Update with new choices functionality
+
 generate_example <- function() {
   # Section 0: Admin -----------------------------------------------------------
   # Add metadata and choices

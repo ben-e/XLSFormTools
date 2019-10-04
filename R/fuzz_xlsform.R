@@ -61,7 +61,7 @@ fuzz_xls_form <- function(form) {
       },
       end = {
         # Ignore
-      }
+      },
       today = {
         # TODO make sure date format comforms to standards
         df[1, var] <- Sys.Date()
@@ -98,7 +98,7 @@ fuzz_xls_form <- function(form) {
         else {
           # TODO: Parsing constraints is going to be tricky...
           # https://docs.opendatakit.org/form-operators-functions/
-          !!
+          # !!
         }
       },
       # Groups/RepeatGroups

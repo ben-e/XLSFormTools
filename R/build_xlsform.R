@@ -25,6 +25,13 @@ add_choices <- function(form, list_name, name, label) {
   if (length(name) != length(label))
     stop("The length of 'name' does not match the length of 'label'.")
 
+  # Check the form to make sure the choice is not already present, if it is
+  # already present just return the form as is
+  if (list_name %in% form$choices$list_name)
+    return(form)
+
+  # TODO: Do something if choice does exist, but options are different
+
   # Create the tibble holding the new choices
   n_choices <- length(name)
   new_choices <- tibble(list_name = rep(list_name, n_choices),
@@ -226,25 +233,35 @@ add_text <- function(form, name, label, constraint = "", relevant = "") {
 #'
 #' @param form The XLSForm to be added to.
 #' @param name The name of the variable.
-#' @param choices The list_name of the choices.
-#' @param label The question label
+#' @param choices A named vector, where the names correspond to the choices
+#'                name, the values correspond to the label, and the name of the
+#'                vector object itself is the list_name. The list_name argument
+#'                can override this.
 #' @param constraint A string containing a valid constraint. Note that regex can
 #'   be used here, see https://docs.opendatakit.org/form-regex/.
 #' @param relevant A string containing a valid relevant.
 #'
 #' @return The form with the new question.
-add_select_one <- function(form, name, label, choices, constraint = "",
-                           relevant = "") {
+add_select_one <- function(form, name, choices, constraint = "",
+                           relevant = "", list_name = "") {
   if (name %in% form$survey$name)
     stop(paste0("Variable ", name, " already exists in form."))
 
-  # The new question row
-  new_q <- tibble(type = paste0("select_one ", choices),
-                  name = name, label = label,
-                  constraint = constraint, relevant = relevant)
+  # Override default name if one is provided
+  clist_name <- ifelse(list_name == "", deparse(substitute(choices)), list_name)
 
-  # Add to the survey
+  # Create new question row
+  new_q <- tibble(type = paste0("select_one ", clist_name),
+                  name = name,
+                  label = label,
+                  constraint = constraint,
+                  relevant = relevant)
+
+  # Add row to the survey
   form$survey <- bind_rows(form$survey, new_q)
+
+  # Add choice to survey, if it is not already there
+  form <- add_choices(form, clist_name, names(choices), choices)
 
   form
 }
