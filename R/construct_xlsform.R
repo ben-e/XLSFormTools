@@ -43,6 +43,7 @@ new_xls_form <- function(form_title = "", form_id = "", public_key = "",
                          submission_url = "", default_language = "",
                          # all_languages = "",
                          version = gsub("[-|:|[:space:]]", "", Sys.time())) {
+
   # TODO: Handle language correctly
   survey <- tibble(type = character(), name = character(),
                    label = character(), constraint = character(),
