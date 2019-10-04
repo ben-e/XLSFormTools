@@ -37,7 +37,8 @@ generate_example <- function() {
   section_br <- new_xls_form()
 
   section_b <- section_b %>%
-    add_integer("hh_size", "B1. What is the size of your household?")
+    add_integer("hh_size", "B1. What is the size of your household?",
+                constraint = ". < 5")
 
   section_br <- section_br %>%
     add_integer("age", "B2. What is this person's age?") %>%
@@ -72,4 +73,6 @@ generate_example <- function() {
     add_group(section_a, "section_a") %>%
     add_group(section_b, "section_b") %>%
     add_group(section_c, "section_c")
+
+  example
 }
