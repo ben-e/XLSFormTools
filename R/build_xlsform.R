@@ -233,6 +233,7 @@ add_text <- function(form, name, label, constraint = "", relevant = "") {
 #'
 #' @param form The XLSForm to be added to.
 #' @param name The name of the variable.
+#' @param label The question label.
 #' @param choices A named vector, where the names correspond to the choices
 #'                name, the values correspond to the label, and the name of the
 #'                vector object itself is the list_name. The list_name argument
@@ -242,7 +243,7 @@ add_text <- function(form, name, label, constraint = "", relevant = "") {
 #' @param relevant A string containing a valid relevant.
 #'
 #' @return The form with the new question.
-add_select_one <- function(form, name, choices, constraint = "",
+add_select_one <- function(form, name, label, choices, constraint = "",
                            relevant = "", list_name = "") {
   if (name %in% form$survey$name)
     stop(paste0("Variable ", name, " already exists in form."))
@@ -261,7 +262,7 @@ add_select_one <- function(form, name, choices, constraint = "",
   form$survey <- bind_rows(form$survey, new_q)
 
   # Add choice to survey, if it is not already there
-  form <- add_choices(form, clist_name, names(choices), choices)
+  form <- add_choices(form, clist_name, as.numeric(names(choices)), choices)
 
   form
 }
@@ -278,17 +279,25 @@ add_select_one <- function(form, name, choices, constraint = "",
 #'
 #' @return The form with the new question.
 add_select_multiple <- function(form, name, label, choices, constraint = "",
-                                relevant = "") {
+                                relevant = "", list_name = "") {
   if (name %in% form$survey$name)
     stop(paste0("Variable ", name, " already exists in form."))
 
-  # The new question row
-  new_q <- tibble(type = paste0("select_multiple ", choices),
-                  name = name, label = label,
-                  constraint = constraint, relevant = relevant)
+  # Override default name if one is provided
+  clist_name <- ifelse(list_name == "", deparse(substitute(choices)), list_name)
 
-  # Add to the survey
+  # Create new question row
+  new_q <- tibble(type = paste0("select_multiple ", clist_name),
+                  name = name,
+                  label = label,
+                  constraint = constraint,
+                  relevant = relevant)
+
+  # Add row to the survey
   form$survey <- bind_rows(form$survey, new_q)
+
+  # Add choice to survey, if it is not already there
+  form <- add_choices(form, clist_name, as.numeric(names(choices)), choices)
 
   form
 }
@@ -376,6 +385,34 @@ add_deviceid <- function(form) {
 #' @return The form with the note added.
 add_note <- function(form, name, label) {
   new_note <- tibble(type = "note", name = name, label = label)
+  form$survey <- bind_rows(form$survey, new_note)
+  form
+}
+
+#' Add a GPS recording
+#'
+#' @param form The form to add to.
+#' @param name The variable name.
+#' @param label The label.
+#'
+#' @return The form with the note added.
+add_geopoint <- function(form, name, label) {
+  new_note <- tibble(type = "geopoint", name = name, label = label)
+  form$survey <- bind_rows(form$survey, new_note)
+  form
+}
+
+#' Add a calculation.
+#'
+#' @param form The form to add to.
+#' @param name The variable name.
+#' @param formula The formula used in the calculation.
+#'
+#' @return The form with the note added.
+add_calculation <- function(form, name, formula) {
+  new_note <- tibble(type = "geopoint",
+                     name = name,
+                     calculation = formula)
   form$survey <- bind_rows(form$survey, new_note)
   form
 }

@@ -46,7 +46,8 @@ new_xls_form <- function(form_title = "", form_id = "", public_key = "",
   # TODO: Handle language correctly
   survey <- tibble(type = character(), name = character(),
                    label = character(), constraint = character(),
-                   relevant = character())
+                   relevant = character(),
+                   calculation = character())
   choices <- tibble(list_name = character(), name = numeric(),
                     label = character())
 
