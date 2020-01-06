@@ -6,7 +6,7 @@ XLSFormTools is a small R package containing several utilities for generating an
 
 ### A Domain Specific Language for Generating XLSForms
 
-Currently XLSForms are generated in Excel, which is unfriendly with respect to both version control and collaboration (e.g. sheets often end up with names like "household_survey_2019_02_01_ewing_v5_final.xlsx""). Writing surveys in a dedicated language embedded in R solves both of these problems by enabling the use of version tools that work well with plain text like Git. Further, embedding the language in R allows users to fully leverage R to generate surveys. For example, a user could generate a survey asking respondents about current events by scraping headlines from news sites each day.
+Currently XLSForms are generated in Excel, which is unfriendly with respect to both version control and collaboration (e.g. sheets often end up with names like "household_survey_2019_02_01_ewing_v5_final.xlsx"). Writing surveys in a dedicated language embedded in R solves both of these problems by enabling the use of version tools that work well with plain text like Git. Further, embedding the language in R allows users to fully leverage R to generate surveys. For example, a user could generate a survey asking respondents about current events by scraping headlines from news sites each day.
 
 The language is built to match the [XLSForm standard](https://xlsform.org/en/ref-table/) as closely as possible, with the philosophy that if you think something should work, it will. Much of the code is drawn from Hadley Wickham's __Advanced R__ [domain specific language examples](http://adv-r.had.co.nz/dsl.html). Here is an example.
 
