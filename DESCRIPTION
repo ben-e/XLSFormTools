@@ -11,7 +11,9 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     dplyr,
+    purrr,
     tibble,
     readxl, 
     shiny,
     stringr
+RoxygenNote: 7.1.1
